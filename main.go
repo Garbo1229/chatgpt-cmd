@@ -15,7 +15,7 @@ import (
 type result struct {
 	code int64
 	msg  string
-	data map[string]interface{}
+	data interface{}
 	err  error
 }
 
@@ -25,11 +25,13 @@ var apiKey = ""
 // ChatGPT API的URL
 var apiURL = "https://api.openai.com/v1/chat/completions"
 
+var end = "请按下回车结束程序"
+
 func main() {
 
 	if apiKey == "" {
-		fmt.Println("请替换您的API秘钥后再执行")
-		os.Exit(0)
+		fmt.Print("请输入你的apiKey: ")
+		fmt.Scanln(&apiKey)
 	}
 
 	closeHandler()
@@ -60,11 +62,15 @@ func main() {
 			fmt.Printf("[ChatGPT]: %v\n", result.msg)
 		} else if result.code == 500 {
 			// API错误
-			fmt.Printf("[ChatGPT Error]: %v\n[Response Data]: %v\n", result.msg, result.data)
+			fmt.Printf("[ChatGPT Error]: %v\n[Response Data]: %s\n", result.msg, result.data)
+			fmt.Println(end)
+			fmt.Scanln(&end)
 			break
 		} else if result.err != nil {
 			// 请求过程中错误
-			fmt.Printf("[System]: %v\n[Response Data]: %v\n", result.err, result.data)
+			fmt.Printf("[System]: %v\n", result.err)
+			fmt.Println(end)
+			fmt.Scanln(&end)
 			break
 		}
 
@@ -120,7 +126,7 @@ func requestHandler(messages []interface{}) result {
 	// 处理错误
 	if errorData, ok := responseData["error"]; ok {
 		if errorMessgae, ok := errorData.(map[string]interface{})["message"]; ok {
-			return result{code: 500, msg: errorMessgae.(string), data: requestData}
+			return result{code: 500, msg: errorMessgae.(string), data: requestBody}
 		}
 
 	}
@@ -132,7 +138,7 @@ func requestHandler(messages []interface{}) result {
 			}
 		}
 	}
-	return result{code: 500, msg: "出现未知错误", data: requestData}
+	return result{code: 500, msg: "出现未知错误", data: requestBody}
 }
 
 // 处理关闭提示
